@@ -3,9 +3,9 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { 
   getFirestore, doc, setDoc, onSnapshot, collection, addDoc, 
-  deleteDoc 
+  deleteDoc, updateDoc 
 } from 'firebase/firestore';
-import { Mic, MicOff, Users, Radio, Key, LogOut, AlertTriangle, ShieldCheck, MessageSquare, Send, X, Trash2, UserX } from 'lucide-react';
+import { Mic, MicOff, Users, Radio, Key, LogOut, AlertTriangle, ShieldCheck, MessageSquare, Send, X, Trash2, UserX, Pin } from 'lucide-react';
 import './App.css';
 
 const firebaseConfig = {
@@ -190,7 +190,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
 
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(true);
 
   const usersCollectionPath = `rooms/${roomCode}/users`;
   const signalsCollectionPath = `rooms/${roomCode}/signals`;
@@ -220,7 +220,8 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
       senderUid: user.uid,
       username,
       text: textToSend,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      pinned: false
     });
   };
 
@@ -228,6 +229,23 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
     const pwd = prompt("Enter admin password to delete message:");
     if (pwd === "admin") {
       await deleteDoc(doc(db, messagesCollectionPath, msgId)).catch((err) => console.error(err));
+    } else if (pwd !== null) {
+      alert("Incorrect password!");
+    }
+  };
+
+  const handleTogglePin = async (msgId, currentPinnedState) => {
+    const pwd = prompt(`Enter admin password to ${currentPinnedState ? 'unpin' : 'pin'} message:`);
+    if (pwd === "admin") {
+      if (!currentPinnedState) {
+        const currentlyPinned = messages.filter(m => m.pinned);
+        for (const m of currentlyPinned) {
+          await updateDoc(doc(db, messagesCollectionPath, m.id), { pinned: false }).catch(() => {});
+        }
+      }
+      await updateDoc(doc(db, messagesCollectionPath, msgId), {
+        pinned: !currentPinnedState
+      }).catch((err) => console.error(err));
     } else if (pwd !== null) {
       alert("Incorrect password!");
     }
@@ -402,7 +420,6 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
         }
       });
       
-      // Only kick user if they were successfully added to presence FIRST and then removed
       if (hasJoinedPresence.current && !amIInList) {
         onLeave();
         return;
@@ -502,6 +519,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   }
 
   const activeParticipantCount = Object.keys(participants).length;
+  const pinnedMessage = messages.find(m => m.pinned);
 
   return (
     <div className="flex flex-col h-[100dvh] overflow-hidden max-w-7xl mx-auto bg-slate-950">
@@ -583,6 +601,23 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
               </button>
             </div>
 
+            {pinnedMessage && (
+              <div className="p-2.5 px-3.5 bg-indigo-950/60 border-b border-indigo-500/30 flex items-start gap-2 text-xs">
+                <Pin size={14} className="text-indigo-400 shrink-0 mt-0.5" />
+                <div className="flex-grow overflow-hidden">
+                  <span className="text-[10px] font-bold text-indigo-400 block uppercase tracking-wider">Pinned Message</span>
+                  <p className="text-slate-200 truncate font-medium">{pinnedMessage.text}</p>
+                </div>
+                <button 
+                  onClick={() => handleTogglePin(pinnedMessage.id, true)} 
+                  className="text-slate-500 hover:text-slate-300 p-0.5 shrink-0" 
+                  title="Unpin message (Admin)"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+
             <div className="flex-grow p-4 overflow-y-auto space-y-3">
               {messages.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-slate-600 text-xs italic">
@@ -593,6 +628,13 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
                   <div key={msg.id} className={`flex flex-col group ${msg.senderUid === user.uid ? 'items-end' : 'items-start'}`}>
                     <div className="flex items-center gap-1.5 px-1">
                       <span className="text-[10px] text-slate-500 font-medium">{msg.username}</span>
+                      <button 
+                        onClick={() => handleTogglePin(msg.id, msg.pinned)}
+                        className={`transition-opacity p-0.5 ${msg.pinned ? 'text-indigo-400 opacity-100' : 'opacity-0 group-hover:opacity-100 text-slate-600 hover:text-indigo-400'}`}
+                        title={msg.pinned ? "Unpin message (Admin)" : "Pin message to top (Admin)"}
+                      >
+                        <Pin size={12} />
+                      </button>
                       <button 
                         onClick={() => handleDeleteMessage(msg.id)}
                         className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition-opacity p-0.5"
