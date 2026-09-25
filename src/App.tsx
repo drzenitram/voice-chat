@@ -3,10 +3,11 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { 
   getFirestore, doc, setDoc, onSnapshot, collection, addDoc, 
-  deleteDoc, query 
+  deleteDoc 
 } from 'firebase/firestore';
-import { Mic, MicOff, Settings, Users, Radio, Key, LogOut, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Mic, MicOff, Users, Radio, Key, LogOut, AlertTriangle, ShieldCheck, MessageSquare, Send } from 'lucide-react';
 import './App.css';
+
 const firebaseConfig = {
   apiKey: "AIzaSyA2bLmRQtMYx-fxr2ZAo3oAaCEGPczsUSM",
   authDomain: "voicechatapp-d00e3.firebaseapp.com",
@@ -17,17 +18,13 @@ const firebaseConfig = {
   measurementId: "G-HQV3SGVNJF"
 };
 
-// Initialize Firebase correctly for your local environment
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// WebRTC Configuration
 const rtcConfig = {
   iceServers: [
-    {
-      urls: "stun:stun.relay.metered.ca:80",
-    },
+    { urls: "stun:stun.relay.metered.ca:80" },
     {
       urls: "turn:standard.relay.metered.ca:80",
       username: "9842b3e0331fb4d6a1f78a50",
@@ -58,7 +55,6 @@ export default function App() {
   const [isInRoom, setIsInRoom] = useState(false);
   const [error, setError] = useState('');
 
-  // Authentication Setup
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -120,7 +116,6 @@ function Lobby({ username, setUsername, roomCode, setRoomCode, handleJoin, error
   return (
     <div className="flex items-center justify-center min-h-screen p-4">
       <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden">
-        
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl"></div>
 
@@ -186,15 +181,48 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   
   const localStream = useRef(null);
   const remoteStreams = useRef({}); 
-  const [renderTrigger, setRenderTrigger] = useState(0); 
+  const [, setRenderTrigger] = useState(0); 
   
   const pcs = useRef({}); 
   const iceQueues = useRef({}); 
   const joinTimestamp = useRef(Date.now());
 
-  // Cleaned up standard Firestore paths
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [isChatOpen, setIsChatOpen] = useState(true);
+
   const usersCollectionPath = `rooms/${roomCode}/users`;
   const signalsCollectionPath = `rooms/${roomCode}/signals`;
+  const messagesCollectionPath = `rooms/${roomCode}/messages`;
+
+  // Real-time Chat listener
+  useEffect(() => {
+    if (!user) return;
+
+    const messagesRef = collection(db, messagesCollectionPath);
+    const unsubMessages = onSnapshot(messagesRef, (snapshot) => {
+      const chatList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      chatList.sort((a, b) => a.timestamp - b.timestamp);
+      setMessages(chatList);
+    });
+
+    return () => unsubMessages();
+  }, [user, roomCode, messagesCollectionPath]);
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+
+    const textToSend = newMessage.trim();
+    setNewMessage('');
+
+    await addDoc(collection(db, messagesCollectionPath), {
+      senderUid: user.uid,
+      username,
+      text: textToSend,
+      timestamp: Date.now()
+    });
+  };
 
   useEffect(() => {
     let active = true;
@@ -245,7 +273,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
       window.removeEventListener('beforeunload', cleanup);
       cleanup();
     };
-  }, [user, roomCode, username]);
+  }, [user, roomCode, username, usersCollectionPath]);
 
   const updateAudioTrackState = useCallback(() => {
     if (!localStream.current) return;
@@ -270,7 +298,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
 
     const handleKeyDown = (e) => {
       if (e.code === 'Space' && !e.repeat) {
-        if(document.activeElement.tagName === 'INPUT') return;
+        if(document.activeElement?.tagName === 'INPUT') return;
         e.preventDefault();
         setIsHoldingPTT(true);
       }
@@ -379,7 +407,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
       unsubUsers();
       unsubSignals();
     };
-  }, [user]);
+  }, [user, usersCollectionPath, signalsCollectionPath]);
 
   const initiateOffer = async (targetUid) => {
     try {
@@ -464,6 +492,16 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
         </div>
 
         <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+          <button 
+            onClick={() => setIsChatOpen(!isChatOpen)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all border text-sm font-medium ${
+              isChatOpen 
+                ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30' 
+                : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700'
+            }`}
+          >
+            <MessageSquare size={16} /> Chat
+          </button>
           <div className="flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl">
             <Users size={16} className="text-slate-400" />
             <span className="text-sm font-medium">
@@ -480,31 +518,69 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
         </div>
       </header>
 
-      {/* Main Grid Area */}
-      <main className="flex-grow p-4 md:p-8 overflow-y-auto relative z-0 flex items-center justify-center">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 w-full max-w-6xl">
-          {Object.values(participants).map(p => (
-            <UserAvatar 
-              key={p.uid} 
-              user={p} 
-              isMe={p.uid === user.uid} 
-              stream={p.uid === user.uid ? localStream.current : remoteStreams.current[p.uid]}
-            />
-          ))}
-          {/* Empty Slots */}
-          {Array.from({ length: Math.max(0, 5 - activeParticipantCount) }).map((_, i) => (
-            <div key={`empty-${i}`} className="border border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center min-h-[220px] bg-slate-900/20 opacity-50">
-              <Users size={24} className="text-slate-700 mb-2" />
-              <span className="text-slate-600 text-xs font-semibold uppercase tracking-wider">Awaiting User</span>
+      {/* Main Container */}
+      <div className="flex-grow flex overflow-hidden relative">
+        <main className="flex-grow p-4 md:p-8 overflow-y-auto flex items-center justify-center">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 w-full max-w-6xl">
+            {Object.values(participants).map(p => (
+              <UserAvatar 
+                key={p.uid} 
+                user={p} 
+                isMe={p.uid === user.uid} 
+                stream={p.uid === user.uid ? localStream.current : remoteStreams.current[p.uid]}
+              />
+            ))}
+            {Array.from({ length: Math.max(0, 5 - activeParticipantCount) }).map((_, i) => (
+              <div key={`empty-${i}`} className="border border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center min-h-[220px] bg-slate-900/20 opacity-50">
+                <Users size={24} className="text-slate-700 mb-2" />
+                <span className="text-slate-600 text-xs font-semibold uppercase tracking-wider">Awaiting User</span>
+              </div>
+            ))}
+          </div>
+        </main>
+
+        {/* Text Chat Sidebar */}
+        {isChatOpen && (
+          <aside className="w-80 border-l border-slate-800 bg-slate-900/80 flex flex-col justify-between backdrop-blur-md">
+            <div className="p-4 border-b border-slate-800 font-bold text-white flex items-center justify-between">
+              <span className="flex items-center gap-2 text-sm"><MessageSquare size={16}/> Room Chat</span>
+              <button onClick={() => setIsChatOpen(false)} className="text-xs text-slate-400 hover:text-white">Close</button>
             </div>
-          ))}
-        </div>
-      </main>
+
+            <div className="flex-grow p-4 overflow-y-auto space-y-3">
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex flex-col ${msg.senderUid === user.uid ? 'items-end' : 'items-start'}`}>
+                  <span className="text-[10px] text-slate-500 font-medium px-1">{msg.username}</span>
+                  <div className={`mt-0.5 px-3 py-2 rounded-xl text-sm max-w-[85%] break-words ${
+                    msg.senderUid === user.uid 
+                      ? 'bg-indigo-600 text-white rounded-br-none' 
+                      : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
+                  }`}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-800 flex gap-2">
+              <input 
+                type="text"
+                placeholder="Send a message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="flex-grow bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+              <button type="submit" className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-colors">
+                <Send size={16} />
+              </button>
+            </form>
+          </aside>
+        )}
+      </div>
 
       {/* Footer Controls Area */}
       <footer className="flex-none p-4 md:p-6 border-t border-slate-800 bg-slate-900/60 backdrop-blur-lg z-10">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          
           <div className="flex gap-4">
             <button 
               onClick={() => setIsMuted(!isMuted)}
@@ -557,7 +633,6 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
               Push-to-Talk
             </button>
           </div>
-          
         </div>
       </footer>
     </div>
@@ -623,7 +698,6 @@ function UserAvatar({ user, isMe, stream }) {
 
   return (
     <div className="flex flex-col items-center justify-center p-6 bg-slate-900/80 rounded-2xl border border-slate-800 transition-all duration-300 relative group min-h-[220px] shadow-xl overflow-hidden backdrop-blur-sm">
-      
       {!isMe && <audio ref={audioRef} autoPlay playsInline hidden />}
 
       <div 
