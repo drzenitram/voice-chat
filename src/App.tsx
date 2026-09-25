@@ -234,8 +234,11 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
 
   const handleRemoveUser = async (targetUid) => {
     if (targetUid === user.uid) return;
-    if (window.confirm("Disconnect this participant from the room?")) {
+    const pwd = prompt("Enter admin password to disconnect user:");
+    if (pwd === "admin") {
       await deleteDoc(doc(db, usersCollectionPath, targetUid)).catch((err) => console.error(err));
+    } else if (pwd !== null) {
+      alert("Incorrect password!");
     }
   };
 
@@ -397,7 +400,6 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
         }
       });
       
-      // If user was kicked/removed, leave room automatically
       if (!amIInList && snapshot.docs.length > 0) {
         onLeave();
         return;
@@ -749,7 +751,7 @@ function UserAvatar({ user, isMe, stream, onRemove }) {
         <button 
           onClick={onRemove}
           className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500/10 text-red-400 opacity-80 sm:opacity-0 group-hover:opacity-100 hover:bg-red-500/20 border border-red-500/20 transition-all z-20"
-          title="Remove user from room"
+          title="Remove user from room (Requires Admin Password)"
         >
           <UserX size={14} />
         </button>
