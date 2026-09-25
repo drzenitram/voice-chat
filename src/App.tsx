@@ -646,7 +646,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
                 onClick={() => setIsPTT(false)}
                 className={`flex-1 px-3 py-2 rounded-lg text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all ${!isPTT ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}
               >
-                Voice Activity
+                Voice Activated Mic
               </button>
               <button 
                 onClick={() => setIsPTT(true)}
@@ -676,7 +676,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
               </button>
             ) : (
               <div className="w-full sm:w-auto px-4 py-2.5 sm:px-10 sm:py-4 flex items-center justify-center gap-2 text-slate-500 text-[11px] sm:text-xs font-semibold uppercase tracking-widest bg-slate-900/50 rounded-xl sm:rounded-2xl border border-slate-800/50">
-                <Mic size={15} /> Voice Activity Active
+                <Mic size={15} /> Voice Activated Mic Active
               </div>
             )}
           </div>
