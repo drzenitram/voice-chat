@@ -186,6 +186,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   const pcs = useRef({}); 
   const iceQueues = useRef({}); 
   const joinTimestamp = useRef(Date.now());
+  const hasJoinedPresence = useRef(false);
 
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -255,7 +256,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
         localStream.current = stream;
         updateAudioTrackState();
         setRenderTrigger(prev => prev + 1);
-        joinRoomPresence();
+        await joinRoomPresence();
       } catch (err) {
         console.error("Microphone Access Error:", err);
         setMediaError("Microphone access denied. Please allow permissions in your browser.");
@@ -270,6 +271,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
         username,
         joinedAt: Date.now()
       });
+      hasJoinedPresence.current = true;
     };
 
     setupMedia();
@@ -400,7 +402,8 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
         }
       });
       
-      if (!amIInList && snapshot.docs.length > 0) {
+      // Only kick user if they were successfully added to presence FIRST and then removed
+      if (hasJoinedPresence.current && !amIInList) {
         onLeave();
         return;
       }
@@ -433,7 +436,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
       unsubUsers();
       unsubSignals();
     };
-  }, [user, usersCollectionPath, signalsCollectionPath]);
+  }, [user, usersCollectionPath, signalsCollectionPath, onLeave]);
 
   const initiateOffer = async (targetUid) => {
     try {
@@ -789,7 +792,7 @@ function UserAvatar({ user, isMe, stream, onRemove }) {
       </span>
       {isMe && <span className="text-indigo-400 text-[10px] font-semibold uppercase tracking-wider mt-0.5">You</span>}
       
-      <div className={`mt-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full transition-colors ${isSpeaking ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-950 text-slate-500'}`}>
+      <div className={`mt-3 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full transition-colors ${isSpeaking ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-950 text-slate-500'}`}>
         <div className={`w-1.5 h-1.5 rounded-full ${isSpeaking ? 'bg-emerald-400 animate-pulse' : 'bg-slate-700'}`}></div>
         {isSpeaking ? 'Active' : 'Standby'}
       </div>
