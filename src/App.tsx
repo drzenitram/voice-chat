@@ -5,7 +5,7 @@ import {
   getFirestore, doc, setDoc, onSnapshot, collection, addDoc, 
   deleteDoc 
 } from 'firebase/firestore';
-import { Mic, MicOff, Users, Radio, Key, LogOut, AlertTriangle, ShieldCheck, MessageSquare, Send } from 'lucide-react';
+import { Mic, MicOff, Users, Radio, Key, LogOut, AlertTriangle, ShieldCheck, MessageSquare, Send, X } from 'lucide-react';
 import './App.css';
 
 const firebaseConfig = {
@@ -85,17 +85,17 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-200 flex items-center justify-center font-sans">
+      <div className="min-h-[100dvh] bg-slate-950 text-slate-200 flex items-center justify-center font-sans p-4">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-          <div className="animate-pulse text-indigo-400 font-semibold">Establishing Secure Connection...</div>
+          <div className="animate-pulse text-indigo-400 font-semibold text-center text-sm">Establishing Secure Connection...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30">
+    <div className="min-h-[100dvh] bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30">
       {!isInRoom ? (
         <Lobby 
           username={username} setUsername={setUsername} 
@@ -114,22 +114,22 @@ export default function App() {
 
 function Lobby({ username, setUsername, roomCode, setRoomCode, handleJoin, error }) {
   return (
-    <div className="flex items-center justify-center min-h-screen p-4">
-      <div className="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden">
+    <div className="flex items-center justify-center min-h-[100dvh] p-4">
+      <div className="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden">
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl"></div>
 
-        <div className="relative z-10 text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-800/80 text-indigo-400 mb-4 ring-1 ring-slate-700 shadow-lg shadow-indigo-500/10">
-            <ShieldCheck size={32} />
+        <div className="relative z-10 text-center mb-6 sm:mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-slate-800/80 text-indigo-400 mb-3 sm:mb-4 ring-1 ring-slate-700 shadow-lg shadow-indigo-500/10">
+            <ShieldCheck size={30} />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">Secure Voice</h1>
-          <p className="text-slate-400 text-sm">Peer-to-peer encrypted communications</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2 tracking-tight">Secure Voice</h1>
+          <p className="text-slate-400 text-xs sm:text-sm">Peer-to-peer encrypted communications</p>
         </div>
 
-        <form onSubmit={handleJoin} className="space-y-5 relative z-10">
+        <form onSubmit={handleJoin} className="space-y-4 sm:space-y-5 relative z-10">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg flex items-center justify-center gap-2">
+            <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs sm:text-sm p-3 rounded-lg flex items-center justify-center gap-2">
               <AlertTriangle size={16} /> {error}
             </div>
           )}
@@ -139,7 +139,7 @@ function Lobby({ username, setUsername, roomCode, setRoomCode, handleJoin, error
             <input 
               type="text" 
               maxLength={16}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
               placeholder="e.g. Commander"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -150,19 +150,19 @@ function Lobby({ username, setUsername, roomCode, setRoomCode, handleJoin, error
             <div className="relative">
               <input 
                 type="text" 
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all uppercase tracking-widest font-mono"
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all uppercase tracking-widest font-mono text-sm"
                 placeholder="SECRET-KEY-123"
                 value={roomCode}
                 onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
               />
               <Key size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
             </div>
-            <p className="text-xs text-slate-500 mt-2">Only users with this exact code can join.</p>
+            <p className="text-[11px] text-slate-500 mt-1.5">Only users with this exact code can join.</p>
           </div>
           
           <button 
             type="submit"
-            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.2)] hover:shadow-[0_0_25px_rgba(79,70,229,0.4)] active:scale-[0.98]"
+            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.2)] hover:shadow-[0_0_25px_rgba(79,70,229,0.4)] active:scale-[0.98] text-sm"
           >
             Connect to Node
           </button>
@@ -189,13 +189,12 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
 
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [isChatOpen, setIsChatOpen] = useState(true);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   const usersCollectionPath = `rooms/${roomCode}/users`;
   const signalsCollectionPath = `rooms/${roomCode}/signals`;
   const messagesCollectionPath = `rooms/${roomCode}/messages`;
 
-  // Real-time Chat listener
   useEffect(() => {
     if (!user) return;
 
@@ -456,14 +455,14 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
 
   if (mediaError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center bg-slate-950">
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-6 rounded-2xl max-w-lg shadow-xl">
+      <div className="flex flex-col items-center justify-center min-h-[100dvh] p-6 text-center bg-slate-950">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-6 rounded-2xl max-w-lg shadow-xl w-full">
           <MicOff size={48} className="mx-auto mb-4 opacity-80" />
           <h2 className="text-xl font-bold mb-2">Hardware Error</h2>
           <p className="text-sm opacity-90">{mediaError}</p>
           <button 
             onClick={onLeave}
-            className="mt-6 px-6 py-2 bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors border border-slate-700 font-medium"
+            className="mt-6 px-6 py-2.5 bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors border border-slate-700 font-medium text-sm w-full sm:w-auto"
           >
             Return to Menu
           </button>
@@ -475,53 +474,61 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   const activeParticipantCount = Object.keys(participants).length;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden max-w-7xl mx-auto bg-slate-950">
+    <div className="flex flex-col h-[100dvh] overflow-hidden max-w-7xl mx-auto bg-slate-950">
       
-      {/* Header Area */}
-      <header className="flex-none p-4 md:p-6 flex flex-col md:flex-row items-center justify-between border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md z-10 gap-4">
-        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+      {/* Responsive Header */}
+      <header className="flex-none p-3 sm:p-5 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md z-10">
+        <div className="flex items-center gap-2 sm:gap-4">
           <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2 tracking-tight">
-              <Radio className="text-emerald-400" size={20} /> 
-              Secure Channel
+            <h2 className="text-base sm:text-xl font-bold text-white flex items-center gap-1.5 sm:gap-2 tracking-tight">
+              <Radio className="text-emerald-400 shrink-0" size={18} /> 
+              <span className="truncate">Secure Channel</span>
             </h2>
-            <p className="text-slate-400 text-sm mt-1 flex items-center gap-2">
+            <p className="text-slate-400 text-xs mt-0.5 flex items-center gap-1">
               <Key size={12} /> <span className="font-mono text-indigo-300">{roomCode}</span>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+        <div className="flex items-center gap-2 sm:gap-4">
           <button 
             onClick={() => setIsChatOpen(!isChatOpen)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all border text-sm font-medium ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl transition-all border text-xs sm:text-sm font-medium ${
               isChatOpen 
                 ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30' 
                 : 'bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700'
             }`}
           >
-            <MessageSquare size={16} /> Chat
+            <MessageSquare size={16} />
+            <span className="hidden sm:inline">Chat</span>
+            {messages.length > 0 && (
+              <span className="bg-indigo-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                {messages.length}
+              </span>
+            )}
           </button>
-          <div className="flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 rounded-xl">
-            <Users size={16} className="text-slate-400" />
-            <span className="text-sm font-medium">
+          
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-slate-900 border border-slate-800 rounded-xl">
+            <Users size={15} className="text-slate-400" />
+            <span className="text-xs sm:text-sm font-medium">
               <span className={activeParticipantCount === 5 ? "text-amber-400" : "text-white"}>{activeParticipantCount}</span>
-              <span className="text-slate-500"> / 5</span>
+              <span className="text-slate-500">/5</span>
             </span>
           </div>
+
           <button 
             onClick={onLeave}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all border border-slate-800 hover:border-red-500/30 text-sm font-medium text-slate-300"
+            className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-slate-900 hover:bg-red-500/10 hover:text-red-400 rounded-xl transition-all border border-slate-800 hover:border-red-500/30 text-xs sm:text-sm font-medium text-slate-300"
           >
-            <LogOut size={16} /> Disconnect
+            <LogOut size={16} /> <span className="hidden sm:inline">Disconnect</span>
           </button>
         </div>
       </header>
 
-      {/* Main Container */}
+      {/* Main Grid Area & Mobile Overlay Chat */}
       <div className="flex-grow flex overflow-hidden relative">
-        <main className="flex-grow p-4 md:p-8 overflow-y-auto flex items-center justify-center">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 w-full max-w-6xl">
+        <main className="flex-grow p-3 sm:p-6 overflow-y-auto flex items-center justify-center">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 w-full max-w-6xl">
             {Object.values(participants).map(p => (
               <UserAvatar 
                 key={p.uid} 
@@ -531,44 +538,52 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
               />
             ))}
             {Array.from({ length: Math.max(0, 5 - activeParticipantCount) }).map((_, i) => (
-              <div key={`empty-${i}`} className="border border-dashed border-slate-800 rounded-2xl flex flex-col items-center justify-center min-h-[220px] bg-slate-900/20 opacity-50">
-                <Users size={24} className="text-slate-700 mb-2" />
-                <span className="text-slate-600 text-xs font-semibold uppercase tracking-wider">Awaiting User</span>
+              <div key={`empty-${i}`} className="border border-dashed border-slate-800/80 rounded-2xl flex flex-col items-center justify-center min-h-[140px] sm:min-h-[200px] bg-slate-900/10 opacity-40">
+                <Users size={20} className="text-slate-700 mb-1.5" />
+                <span className="text-slate-600 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Awaiting User</span>
               </div>
             ))}
           </div>
         </main>
 
-        {/* Text Chat Sidebar */}
+        {/* Text Chat: Overlay on mobile, side-drawer on desktop */}
         {isChatOpen && (
-          <aside className="w-80 border-l border-slate-800 bg-slate-900/80 flex flex-col justify-between backdrop-blur-md">
-            <div className="p-4 border-b border-slate-800 font-bold text-white flex items-center justify-between">
+          <aside className="absolute inset-0 sm:relative sm:inset-auto sm:w-80 border-l border-slate-800 bg-slate-950/95 sm:bg-slate-900/80 flex flex-col justify-between backdrop-blur-lg z-30">
+            <div className="p-3.5 border-b border-slate-800 font-bold text-white flex items-center justify-between">
               <span className="flex items-center gap-2 text-sm"><MessageSquare size={16}/> Room Chat</span>
-              <button onClick={() => setIsChatOpen(false)} className="text-xs text-slate-400 hover:text-white">Close</button>
+              <button onClick={() => setIsChatOpen(false)} className="p-1 text-slate-400 hover:text-white rounded-lg">
+                <X size={18} />
+              </button>
             </div>
 
             <div className="flex-grow p-4 overflow-y-auto space-y-3">
-              {messages.map((msg) => (
-                <div key={msg.id} className={`flex flex-col ${msg.senderUid === user.uid ? 'items-end' : 'items-start'}`}>
-                  <span className="text-[10px] text-slate-500 font-medium px-1">{msg.username}</span>
-                  <div className={`mt-0.5 px-3 py-2 rounded-xl text-sm max-w-[85%] break-words ${
-                    msg.senderUid === user.uid 
-                      ? 'bg-indigo-600 text-white rounded-br-none' 
-                      : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
-                  }`}>
-                    {msg.text}
-                  </div>
+              {messages.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-slate-600 text-xs italic">
+                  No messages yet. Say hello!
                 </div>
-              ))}
+              ) : (
+                messages.map((msg) => (
+                  <div key={msg.id} className={`flex flex-col ${msg.senderUid === user.uid ? 'items-end' : 'items-start'}`}>
+                    <span className="text-[10px] text-slate-500 font-medium px-1">{msg.username}</span>
+                    <div className={`mt-0.5 px-3 py-2 rounded-xl text-xs sm:text-sm max-w-[85%] break-words ${
+                      msg.senderUid === user.uid 
+                        ? 'bg-indigo-600 text-white rounded-br-none' 
+                        : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
+                    }`}>
+                      {msg.text}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
-            <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-800 flex gap-2">
+            <form onSubmit={handleSendMessage} className="p-3 border-t border-slate-800 flex gap-2 bg-slate-900/50">
               <input 
                 type="text"
                 placeholder="Send a message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-grow bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="flex-grow bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
               <button type="submit" className="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition-colors">
                 <Send size={16} />
@@ -578,60 +593,61 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
         )}
       </div>
 
-      {/* Footer Controls Area */}
-      <footer className="flex-none p-4 md:p-6 border-t border-slate-800 bg-slate-900/60 backdrop-blur-lg z-10">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex gap-4">
+      {/* Mobile-Friendly Bottom Controls */}
+      <footer className="flex-none p-3 sm:p-5 border-t border-slate-800 bg-slate-900/80 backdrop-blur-lg z-10">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-6">
+          <div className="flex items-center justify-between w-full sm:w-auto gap-3">
             <button 
               onClick={() => setIsMuted(!isMuted)}
-              className={`flex items-center justify-center w-14 h-14 rounded-full transition-all shadow-lg ${
+              className={`flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full transition-all shadow-lg shrink-0 ${
                 isMuted 
                   ? 'bg-red-500/10 text-red-500 border border-red-500/30 hover:bg-red-500/20' 
                   : 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700'
               }`}
               title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
             >
-              {isMuted ? <MicOff size={24} /> : <Mic size={24} />}
+              {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
             </button>
+
+            {/* Mode Switcher */}
+            <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner flex-grow sm:flex-grow-0">
+              <button 
+                onClick={() => setIsPTT(false)}
+                className={`flex-1 px-3 py-2 rounded-lg text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all ${!isPTT ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                Voice Activity
+              </button>
+              <button 
+                onClick={() => setIsPTT(true)}
+                className={`flex-1 px-3 py-2 rounded-lg text-[10px] sm:text-xs font-semibold uppercase tracking-wider transition-all ${isPTT ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}
+              >
+                Push-to-Talk
+              </button>
+            </div>
           </div>
 
-          <div className="flex-grow flex justify-center w-full md:w-auto">
+          <div className="w-full sm:w-auto flex justify-center">
             {isPTT ? (
               <button 
-                className={`w-full md:w-auto px-10 py-4 rounded-2xl font-bold tracking-widest text-sm uppercase transition-all duration-100 flex items-center justify-center gap-3 ${
+                className={`w-full sm:w-auto px-6 py-3.5 sm:px-10 sm:py-4 rounded-xl sm:rounded-2xl font-bold tracking-widest text-xs sm:text-sm uppercase transition-all select-none touch-none flex items-center justify-center gap-2 sm:gap-3 ${
                   isHoldingPTT 
-                    ? 'bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.3)] scale-105' 
-                    : 'bg-slate-900 border-2 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.3)] scale-[1.02]' 
+                    : 'bg-slate-900 border-2 border-slate-800 text-slate-400 active:border-slate-700'
                 }`}
                 onMouseDown={() => setIsHoldingPTT(true)}
                 onMouseUp={() => setIsHoldingPTT(false)}
                 onMouseLeave={() => setIsHoldingPTT(false)}
                 onTouchStart={(e) => { e.preventDefault(); setIsHoldingPTT(true); }}
-                onTouchEnd={() => setIsHoldingPTT(false)}
+                onTouchEnd={(e) => { e.preventDefault(); setIsHoldingPTT(false); }}
               >
-                <Radio size={18} className={isHoldingPTT ? 'animate-pulse' : ''}/>
-                {isHoldingPTT ? 'Transmitting...' : 'Press or Hold Space'}
+                <Radio size={16} className={isHoldingPTT ? 'animate-pulse' : ''}/>
+                {isHoldingPTT ? 'Transmitting...' : 'Press & Hold to Talk'}
               </button>
             ) : (
-              <div className="px-10 py-4 flex items-center gap-3 text-slate-500 text-sm font-semibold uppercase tracking-widest bg-slate-900/50 rounded-2xl border border-slate-800/50">
-                <Mic size={18} /> Voice Activity Active
+              <div className="w-full sm:w-auto px-4 py-2.5 sm:px-10 sm:py-4 flex items-center justify-center gap-2 text-slate-500 text-[11px] sm:text-xs font-semibold uppercase tracking-widest bg-slate-900/50 rounded-xl sm:rounded-2xl border border-slate-800/50">
+                <Mic size={15} /> Voice Activity Active
               </div>
             )}
-          </div>
-
-          <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800 shadow-inner w-full md:w-auto">
-            <button 
-              onClick={() => setIsPTT(false)}
-              className={`flex-1 px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${!isPTT ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              Activity
-            </button>
-            <button 
-              onClick={() => setIsPTT(true)}
-              className={`flex-1 px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${isPTT ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}`}
-            >
-              Push-to-Talk
-            </button>
           </div>
         </div>
       </footer>
@@ -697,7 +713,7 @@ function UserAvatar({ user, isMe, stream }) {
   const initial = user.username.charAt(0).toUpperCase();
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 bg-slate-900/80 rounded-2xl border border-slate-800 transition-all duration-300 relative group min-h-[220px] shadow-xl overflow-hidden backdrop-blur-sm">
+    <div className="flex flex-col items-center justify-center p-3 sm:p-6 bg-slate-900/80 rounded-2xl border border-slate-800 transition-all duration-300 relative group min-h-[140px] sm:min-h-[200px] shadow-xl overflow-hidden backdrop-blur-sm">
       {!isMe && <audio ref={audioRef} autoPlay playsInline hidden />}
 
       <div 
@@ -715,32 +731,25 @@ function UserAvatar({ user, isMe, stream }) {
         }}
       />
 
-      <div className="relative mb-4">
+      <div className="relative mb-2 sm:mb-4">
         <div 
-          className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold bg-slate-800 text-white relative z-10 transition-transform duration-100 shadow-inner"
+          className="w-14 h-14 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold bg-slate-800 text-white relative z-10 transition-transform duration-100 shadow-inner"
           style={{
-            transform: isSpeaking ? `scale(${1 + volumeLevel * 0.15})` : 'scale(1)',
+            transform: isSpeaking ? `scale(${1 + volumeLevel * 0.12})` : 'scale(1)',
           }}
         >
           {initial}
         </div>
         <div className={`absolute inset-0 rounded-full border-2 transition-colors duration-200 ${isSpeaking ? 'border-emerald-500' : 'border-slate-700/50'}`}></div>
-        <div 
-          className="absolute inset-0 rounded-full border border-emerald-500/30 transition-all duration-75"
-          style={{
-            transform: isSpeaking ? `scale(${1 + volumeLevel * 0.4})` : 'scale(1)',
-            opacity: isSpeaking ? (1 - volumeLevel) : 0
-          }}
-        ></div>
       </div>
 
-      <span className="font-semibold text-white tracking-wide text-center truncate w-full px-2 text-lg">
+      <span className="font-semibold text-white tracking-wide text-center truncate w-full px-1 text-xs sm:text-base">
         {user.username} 
       </span>
-      {isMe && <span className="text-indigo-400 text-xs font-semibold uppercase tracking-wider mt-1">You</span>}
+      {isMe && <span className="text-indigo-400 text-[10px] font-semibold uppercase tracking-wider mt-0.5">You</span>}
       
-      <div className={`mt-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full transition-colors ${isSpeaking ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-950 text-slate-500'}`}>
-        <div className={`w-2 h-2 rounded-full ${isSpeaking ? 'bg-emerald-400 animate-pulse' : 'bg-slate-700'}`}></div>
+      <div className={`mt-2 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full transition-colors ${isSpeaking ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-950 text-slate-500'}`}>
+        <div className={`w-1.5 h-1.5 rounded-full ${isSpeaking ? 'bg-emerald-400 animate-pulse' : 'bg-slate-700'}`}></div>
         {isSpeaking ? 'Active' : 'Standby'}
       </div>
     </div>
