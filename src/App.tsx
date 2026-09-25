@@ -237,12 +237,6 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   const handleTogglePin = async (msgId, currentPinnedState) => {
     const pwd = prompt(`Enter admin password to ${currentPinnedState ? 'unpin' : 'pin'} message:`);
     if (pwd === "admin") {
-      if (!currentPinnedState) {
-        const currentlyPinned = messages.filter(m => m.pinned);
-        for (const m of currentlyPinned) {
-          await updateDoc(doc(db, messagesCollectionPath, m.id), { pinned: false }).catch(() => {});
-        }
-      }
       await updateDoc(doc(db, messagesCollectionPath, msgId), {
         pinned: !currentPinnedState
       }).catch((err) => console.error(err));
@@ -519,7 +513,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   }
 
   const activeParticipantCount = Object.keys(participants).length;
-  const pinnedMessage = messages.find(m => m.pinned);
+  const pinnedMessages = messages.filter(m => m.pinned);
 
   return (
     <div className="flex flex-col h-[100dvh] overflow-hidden max-w-7xl mx-auto bg-slate-950">
@@ -601,20 +595,27 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
               </button>
             </div>
 
-            {pinnedMessage && (
-              <div className="p-2.5 px-3.5 bg-indigo-950/60 border-b border-indigo-500/30 flex items-start gap-2 text-xs">
-                <Pin size={14} className="text-indigo-400 shrink-0 mt-0.5" />
-                <div className="flex-grow overflow-hidden">
-                  <span className="text-[10px] font-bold text-indigo-400 block uppercase tracking-wider">Pinned Message</span>
-                  <p className="text-slate-200 truncate font-medium">{pinnedMessage.text}</p>
-                </div>
-                <button 
-                  onClick={() => handleTogglePin(pinnedMessage.id, true)} 
-                  className="text-slate-500 hover:text-slate-300 p-0.5 shrink-0" 
-                  title="Unpin message (Admin)"
-                >
-                  <X size={12} />
-                </button>
+            {/* Pinned Messages Container */}
+            {pinnedMessages.length > 0 && (
+              <div className="p-2.5 px-3.5 bg-indigo-950/60 border-b border-indigo-500/30 flex flex-col gap-2 max-h-36 overflow-y-auto">
+                <span className="text-[10px] font-bold text-indigo-400 flex items-center gap-1 uppercase tracking-wider">
+                  <Pin size={12} /> Pinned Messages ({pinnedMessages.length})
+                </span>
+                {pinnedMessages.map((pm) => (
+                  <div key={`pinned-${pm.id}`} className="flex items-start justify-between gap-2 text-xs bg-indigo-900/40 p-2 rounded-lg border border-indigo-500/20">
+                    <div className="overflow-hidden">
+                      <span className="text-[10px] text-indigo-300 font-semibold block">{pm.username}</span>
+                      <p className="text-slate-200 truncate font-medium">{pm.text}</p>
+                    </div>
+                    <button 
+                      onClick={() => handleTogglePin(pm.id, true)} 
+                      className="text-slate-400 hover:text-red-400 p-0.5 shrink-0 transition-colors" 
+                      title="Unpin message (Admin)"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -631,7 +632,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
                       <button 
                         onClick={() => handleTogglePin(msg.id, msg.pinned)}
                         className={`transition-opacity p-0.5 ${msg.pinned ? 'text-indigo-400 opacity-100' : 'opacity-0 group-hover:opacity-100 text-slate-600 hover:text-indigo-400'}`}
-                        title={msg.pinned ? "Unpin message (Admin)" : "Pin message to top (Admin)"}
+                        title={msg.pinned ? "Unpin message (Admin)" : "Pin message (Admin)"}
                       >
                         <Pin size={12} />
                       </button>
