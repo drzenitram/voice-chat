@@ -595,24 +595,24 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
               </button>
             </div>
 
-            {/* Pinned Messages Container */}
+{/* Pinned Messages Container */}
             {pinnedMessages.length > 0 && (
-              <div className="p-2.5 px-3.5 bg-indigo-950/60 border-b border-indigo-500/30 flex flex-col gap-2 max-h-36 overflow-y-auto">
-                <span className="text-[10px] font-bold text-indigo-400 flex items-center gap-1 uppercase tracking-wider">
+              <div className="p-2.5 px-3.5 bg-indigo-950/60 border-b border-indigo-500/30 flex flex-col gap-2 max-h-48 overflow-y-auto">
+                <span className="text-[10px] font-bold text-indigo-400 flex items-center gap-1 uppercase tracking-wider sticky top-0 bg-indigo-950/90 py-0.5 z-10">
                   <Pin size={12} /> Pinned Messages ({pinnedMessages.length})
                 </span>
                 {pinnedMessages.map((pm) => (
                   <div key={`pinned-${pm.id}`} className="flex items-start justify-between gap-2 text-xs bg-indigo-900/40 p-2 rounded-lg border border-indigo-500/20">
-                    <div className="overflow-hidden">
-                      <span className="text-[10px] text-indigo-300 font-semibold block">{pm.username}</span>
-                      <p className="text-slate-200 truncate font-medium">{pm.text}</p>
+                    <div className="overflow-hidden flex-grow">
+                      <span className="text-[10px] text-indigo-300 font-semibold block mb-0.5">{pm.username}</span>
+                      <p className="text-slate-200 font-medium break-words whitespace-pre-wrap">{pm.text}</p>
                     </div>
                     <button 
                       onClick={() => handleTogglePin(pm.id, true)} 
                       className="text-slate-400 hover:text-red-400 p-0.5 shrink-0 transition-colors" 
                       title="Unpin message (Admin)"
                     >
-                      <X size={12} />
+                      <X size={14} />
                     </button>
                   </div>
                 ))}
