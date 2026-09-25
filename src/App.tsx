@@ -5,7 +5,7 @@ import {
   getFirestore, doc, setDoc, onSnapshot, collection, addDoc, 
   deleteDoc, updateDoc 
 } from 'firebase/firestore';
-import { Mic, MicOff, Users, Radio, Key, LogOut, AlertTriangle, ShieldCheck, MessageSquare, Send, X, Trash2, UserX, Pin } from 'lucide-react';
+import { Mic, MicOff, Users, Radio, Key, LogOut, AlertTriangle, ShieldCheck, MessageSquare, Send, X, Trash2, UserX, Pin, ChevronDown, ChevronUp } from 'lucide-react';
 import './App.css';
 
 const firebaseConfig = {
@@ -191,6 +191,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(true);
+  const [isPinnedMinimized, setIsPinnedMinimized] = useState(false);
 
   const usersCollectionPath = `rooms/${roomCode}/users`;
   const signalsCollectionPath = `rooms/${roomCode}/signals`;
@@ -595,27 +596,40 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
               </button>
             </div>
 
-{/* Pinned Messages Container */}
+            {/* Pinned Messages Container with Minimize Option */}
             {pinnedMessages.length > 0 && (
-              <div className="p-2.5 px-3.5 bg-indigo-950/60 border-b border-indigo-500/30 flex flex-col gap-2 max-h-48 overflow-y-auto">
-                <span className="text-[10px] font-bold text-indigo-400 flex items-center gap-1 uppercase tracking-wider sticky top-0 bg-indigo-950/90 py-0.5 z-10">
-                  <Pin size={12} /> Pinned Messages ({pinnedMessages.length})
-                </span>
-                {pinnedMessages.map((pm) => (
-                  <div key={`pinned-${pm.id}`} className="flex items-start justify-between gap-2 text-xs bg-indigo-900/40 p-2 rounded-lg border border-indigo-500/20">
-                    <div className="overflow-hidden flex-grow">
-                      <span className="text-[10px] text-indigo-300 font-semibold block mb-0.5">{pm.username}</span>
-                      <p className="text-slate-200 font-medium break-words whitespace-pre-wrap">{pm.text}</p>
-                    </div>
-                    <button 
-                      onClick={() => handleTogglePin(pm.id, true)} 
-                      className="text-slate-400 hover:text-red-400 p-0.5 shrink-0 transition-colors" 
-                      title="Unpin message (Admin)"
-                    >
-                      <X size={14} />
-                    </button>
+              <div className="bg-indigo-950/60 border-b border-indigo-500/30 flex flex-col">
+                <div 
+                  onClick={() => setIsPinnedMinimized(!isPinnedMinimized)}
+                  className="p-2.5 px-3.5 flex items-center justify-between cursor-pointer hover:bg-indigo-900/30 transition-colors select-none"
+                >
+                  <span className="text-[10px] font-bold text-indigo-400 flex items-center gap-1 uppercase tracking-wider">
+                    <Pin size={12} /> Pinned Messages ({pinnedMessages.length})
+                  </span>
+                  <button className="text-indigo-400 p-0.5">
+                    {isPinnedMinimized ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                  </button>
+                </div>
+
+                {!isPinnedMinimized && (
+                  <div className="p-2.5 px-3.5 pt-0 flex flex-col gap-2 max-h-48 overflow-y-auto">
+                    {pinnedMessages.map((pm) => (
+                      <div key={`pinned-${pm.id}`} className="flex items-start justify-between gap-2 text-xs bg-indigo-900/40 p-2 rounded-lg border border-indigo-500/20">
+                        <div className="overflow-hidden flex-grow">
+                          <span className="text-[10px] text-indigo-300 font-semibold block mb-0.5">{pm.username}</span>
+                          <p className="text-slate-200 font-medium break-words whitespace-pre-wrap">{pm.text}</p>
+                        </div>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleTogglePin(pm.id, true); }} 
+                          className="text-slate-400 hover:text-red-400 p-0.5 shrink-0 transition-colors" 
+                          title="Unpin message (Admin)"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             )}
 
