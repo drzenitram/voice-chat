@@ -5,7 +5,7 @@ import {
   getFirestore, doc, setDoc, onSnapshot, collection, addDoc, 
   deleteDoc 
 } from 'firebase/firestore';
-import { Mic, MicOff, Users, Radio, Key, LogOut, AlertTriangle, ShieldCheck, MessageSquare, Send, X } from 'lucide-react';
+import { Mic, MicOff, Users, Radio, Key, LogOut, AlertTriangle, ShieldCheck, MessageSquare, Send, X, Trash2, UserX } from 'lucide-react';
 import './App.css';
 
 const firebaseConfig = {
@@ -223,6 +223,22 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
     });
   };
 
+  const handleDeleteMessage = async (msgId) => {
+    const pwd = prompt("Enter admin password to delete message:");
+    if (pwd === "admin") {
+      await deleteDoc(doc(db, messagesCollectionPath, msgId)).catch((err) => console.error(err));
+    } else if (pwd !== null) {
+      alert("Incorrect password!");
+    }
+  };
+
+  const handleRemoveUser = async (targetUid) => {
+    if (targetUid === user.uid) return;
+    if (window.confirm("Disconnect this participant from the room?")) {
+      await deleteDoc(doc(db, usersCollectionPath, targetUid)).catch((err) => console.error(err));
+    }
+  };
+
   useEffect(() => {
     let active = true;
 
@@ -369,15 +385,24 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
     const usersRef = collection(db, usersCollectionPath);
     const unsubUsers = onSnapshot(usersRef, (snapshot) => {
       const activeUsers = {};
+      let amIInList = false;
+
       snapshot.docs.forEach(docSnap => {
         const data = docSnap.data();
         activeUsers[data.uid] = data;
+        if (data.uid === user.uid) amIInList = true;
         
         if (data.uid !== user.uid && user.uid > data.uid && !pcs.current[data.uid]) {
           initiateOffer(data.uid);
         }
       });
       
+      // If user was kicked/removed, leave room automatically
+      if (!amIInList && snapshot.docs.length > 0) {
+        onLeave();
+        return;
+      }
+
       Object.keys(pcs.current).forEach(uid => {
         if (!activeUsers[uid]) {
           pcs.current[uid].close();
@@ -475,8 +500,6 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
 
   return (
     <div className="flex flex-col h-[100dvh] overflow-hidden max-w-7xl mx-auto bg-slate-950">
-      
-      {/* Responsive Header */}
       <header className="flex-none p-3 sm:p-5 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md z-10">
         <div className="flex items-center gap-2 sm:gap-4">
           <div>
@@ -525,7 +548,6 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
         </div>
       </header>
 
-      {/* Main Grid Area & Mobile Overlay Chat */}
       <div className="flex-grow flex overflow-hidden relative">
         <main className="flex-grow p-3 sm:p-6 overflow-y-auto flex items-center justify-center">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-6 w-full max-w-6xl">
@@ -535,6 +557,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
                 user={p} 
                 isMe={p.uid === user.uid} 
                 stream={p.uid === user.uid ? localStream.current : remoteStreams.current[p.uid]}
+                onRemove={() => handleRemoveUser(p.uid)}
               />
             ))}
             {Array.from({ length: Math.max(0, 5 - activeParticipantCount) }).map((_, i) => (
@@ -546,7 +569,6 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
           </div>
         </main>
 
-        {/* Text Chat: Overlay on mobile, side-drawer on desktop */}
         {isChatOpen && (
           <aside className="absolute inset-0 sm:relative sm:inset-auto sm:w-80 border-l border-slate-800 bg-slate-950/95 sm:bg-slate-900/80 flex flex-col justify-between backdrop-blur-lg z-30">
             <div className="p-3.5 border-b border-slate-800 font-bold text-white flex items-center justify-between">
@@ -563,8 +585,17 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
                 </div>
               ) : (
                 messages.map((msg) => (
-                  <div key={msg.id} className={`flex flex-col ${msg.senderUid === user.uid ? 'items-end' : 'items-start'}`}>
-                    <span className="text-[10px] text-slate-500 font-medium px-1">{msg.username}</span>
+                  <div key={msg.id} className={`flex flex-col group ${msg.senderUid === user.uid ? 'items-end' : 'items-start'}`}>
+                    <div className="flex items-center gap-1.5 px-1">
+                      <span className="text-[10px] text-slate-500 font-medium">{msg.username}</span>
+                      <button 
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition-opacity p-0.5"
+                        title="Delete message (Requires Admin Password)"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                     <div className={`mt-0.5 px-3 py-2 rounded-xl text-xs sm:text-sm max-w-[85%] break-words ${
                       msg.senderUid === user.uid 
                         ? 'bg-indigo-600 text-white rounded-br-none' 
@@ -593,7 +624,6 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
         )}
       </div>
 
-      {/* Mobile-Friendly Bottom Controls */}
       <footer className="flex-none p-3 sm:p-5 border-t border-slate-800 bg-slate-900/80 backdrop-blur-lg z-10">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-6">
           <div className="flex items-center justify-between w-full sm:w-auto gap-3">
@@ -609,7 +639,6 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
               {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
             </button>
 
-            {/* Mode Switcher */}
             <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner flex-grow sm:flex-grow-0">
               <button 
                 onClick={() => setIsPTT(false)}
@@ -655,7 +684,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   );
 }
 
-function UserAvatar({ user, isMe, stream }) {
+function UserAvatar({ user, isMe, stream, onRemove }) {
   const [volumeLevel, setVolumeLevel] = useState(0);
   const audioRef = useRef(null);
 
@@ -715,6 +744,16 @@ function UserAvatar({ user, isMe, stream }) {
   return (
     <div className="flex flex-col items-center justify-center p-3 sm:p-6 bg-slate-900/80 rounded-2xl border border-slate-800 transition-all duration-300 relative group min-h-[140px] sm:min-h-[200px] shadow-xl overflow-hidden backdrop-blur-sm">
       {!isMe && <audio ref={audioRef} autoPlay playsInline hidden />}
+
+      {!isMe && (
+        <button 
+          onClick={onRemove}
+          className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500/10 text-red-400 opacity-80 sm:opacity-0 group-hover:opacity-100 hover:bg-red-500/20 border border-red-500/20 transition-all z-20"
+          title="Remove user from room"
+        >
+          <UserX size={14} />
+        </button>
+      )}
 
       <div 
         className="absolute inset-0 pointer-events-none transition-opacity duration-150"
