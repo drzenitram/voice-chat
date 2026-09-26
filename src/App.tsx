@@ -25,6 +25,7 @@ const db = getFirestore(app);
 const rtcConfig = {
   iceServers: [
     { urls: "stun:stun.relay.metered.ca:80" },
+    { urls: "stun:stun.l.google.com:19302" },
     {
       urls: "turn:standard.relay.metered.ca:80",
       username: "9842b3e0331fb4d6a1f78a50",
@@ -178,14 +179,15 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   const [isPTT, setIsPTT] = useState(false);
   const [isHoldingPTT, setIsHoldingPTT] = useState(false);
   const [mediaError, setMediaError] = useState('');
-  
+  const [isMediaReady, setIsMediaReady] = useState(false);
+
   const localStream = useRef(null);
   const remoteStreams = useRef({}); 
   const [, setRenderTrigger] = useState(0); 
   
   const pcs = useRef({}); 
   const iceQueues = useRef({}); 
-  const joinTimestamp = useRef(Date.now());
+  const processedSignalIds = useRef(new Set());
   const hasJoinedPresence = useRef(false);
 
   const [messages, setMessages] = useState([]);
@@ -196,6 +198,16 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   const usersCollectionPath = `rooms/${roomCode}/users`;
   const signalsCollectionPath = `rooms/${roomCode}/signals`;
   const messagesCollectionPath = `rooms/${roomCode}/messages`;
+
+  const unlockAudioContext = () => {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) {
+      const ctx = new AudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -268,6 +280,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
         }
         localStream.current = stream;
         updateAudioTrackState();
+        setIsMediaReady(true);
         setRenderTrigger(prev => prev + 1);
         await joinRoomPresence();
       } catch (err) {
@@ -398,7 +411,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   };
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !isMediaReady) return;
 
     const usersRef = collection(db, usersCollectionPath);
     const unsubUsers = onSnapshot(usersRef, (snapshot) => {
@@ -436,8 +449,10 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
     const unsubSignals = onSnapshot(signalsRef, async (snapshot) => {
       for (const change of snapshot.docChanges()) {
         if (change.type === 'added') {
+          const docId = change.doc.id;
           const signal = change.doc.data();
-          if (signal.target === user.uid && signal.timestamp > joinTimestamp.current) {
+          if (signal.target === user.uid && !processedSignalIds.current.has(docId)) {
+            processedSignalIds.current.add(docId);
             await handleSignal(signal.sender, signal.type, signal.data);
           }
         }
@@ -448,7 +463,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
       unsubUsers();
       unsubSignals();
     };
-  }, [user, usersCollectionPath, signalsCollectionPath, onLeave]);
+  }, [user, isMediaReady, usersCollectionPath, signalsCollectionPath, onLeave]);
 
   const initiateOffer = async (targetUid) => {
     try {
@@ -517,7 +532,7 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
   const pinnedMessages = messages.filter(m => m.pinned);
 
   return (
-    <div className="flex flex-col h-[100dvh] overflow-hidden max-w-7xl mx-auto bg-slate-950">
+    <div className="flex flex-col h-[100dvh] overflow-hidden max-w-7xl mx-auto bg-slate-950" onClick={unlockAudioContext}>
       <header className="flex-none p-3 sm:p-5 flex items-center justify-between border-b border-slate-800/80 bg-slate-900/40 backdrop-blur-md z-10">
         <div className="flex items-center gap-2 sm:gap-4">
           <div>
@@ -596,7 +611,6 @@ function VoiceRoom({ user, username, roomCode, onLeave }) {
               </button>
             </div>
 
-            {/* Pinned Messages Container with Minimize Option */}
             {pinnedMessages.length > 0 && (
               <div className="bg-indigo-950/60 border-b border-indigo-500/30 flex flex-col">
                 <div 
@@ -755,6 +769,9 @@ function UserAvatar({ user, isMe, stream, onRemove }) {
 
     if (!isMe && audioRef.current) {
       audioRef.current.srcObject = stream;
+      audioRef.current.play().catch(err => {
+        console.warn("Autoplay blocked by browser:", err);
+      });
     }
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -774,6 +791,9 @@ function UserAvatar({ user, isMe, stream, onRemove }) {
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
       const checkVolume = () => {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume().catch(() => {});
+        }
         analyser.getByteFrequencyData(dataArray);
         let sum = 0;
         for (let i = 0; i < dataArray.length; i++) {
